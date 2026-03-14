@@ -3,12 +3,13 @@ import dotenv from "dotenv";
 import authRoutes from "./routes/auth.routes.js";
 import messageRoutes from "./routes/message.routes.js";
 import path from "path";
-import { connect } from "http2";
+import cookieParser from "cookie-parser";
 import connectDB from "./lib/db.js";
 
 dotenv.config();
 
 const app = express();
+app.use(cookieParser());
 const __dirname = path.resolve();
 const PORT = process.env.PORT || 3000; 
 
