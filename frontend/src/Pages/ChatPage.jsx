@@ -1,12 +1,10 @@
 import React from "react";
-
+import { useAuthStore } from "../store/useAuthStore";
 function ChatPage() {
+
+  const {logout} = useAuthStore();
   return (
-    <div className="h-screen w-full flex items-center justify-center">
-      <h1 className="text-white text-5xl font-bold drop-shadow-lg">
-        ChatPage
-      </h1>
-    </div>
+    <div className="z-10">Chatpage <button onClick={logout}>logout</button></div>
   );
 }
 
