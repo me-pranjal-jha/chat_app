@@ -1,21 +1,21 @@
 import express from "express";
-import dotenv from "dotenv";
+import cookieParser from "cookie-parser";
+import path from "path";
+import cors from "cors";
+
 import authRoutes from "./routes/auth.routes.js";
 import messageRoutes from "./routes/message.routes.js";
-import path from "path";
-import cookieParser from "cookie-parser";
-import connectDB from "./lib/db.js";
-import cors from "cors"
+import connectDB from "./lib/db.js"; // ✅ FIXED
+import { ENV } from "./lib/env.js";
+import { app, server } from "./lib/socket.js";
 
-dotenv.config();
-
-const app = express();
+connectDB();
 
 const __dirname = path.resolve();
-const PORT = process.env.PORT || 3000; 
+const PORT = ENV.PORT || 3000;
 
-app.use(express.json());
-app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
+app.use(express.json({ limit: "5mb" }));
+app.use(cors({ origin: ENV.CLIENT_URL, credentials: true }));
 app.use(cookieParser());
 
 app.use("/api/auth", authRoutes);
@@ -27,7 +27,8 @@ app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
 });
 
-app.listen(PORT, () => {
+// ✅ IMPORTANT FIX
+
+server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  connectDB();
 });
