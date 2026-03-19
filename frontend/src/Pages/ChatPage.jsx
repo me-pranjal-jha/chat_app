@@ -10,19 +10,24 @@ import ChatContainer from "../components/ChatContainer";
 import NoConversationPlaceholder from "../components/NoConversationPlaceholder";
 
 function ChatPage() {
-  const { activeTab, selectedUser, getAllContacts, getMyChatPartners } = useChatStore();
+  const {
+    activeTab,
+    selectedUser,
+    getAllContacts,
+    getMyChatPartners,
+  } = useChatStore();
 
   useEffect(() => {
     getAllContacts();
     getMyChatPartners();
-  }, []);
+  }, [getAllContacts, getMyChatPartners]);
 
   return (
-    <div className="h-full w-full overflow-hidden p-4">
-      <div className="mx-auto h-full w-full max-w-6xl overflow-hidden">
+    <div className="w-full h-screen flex items-center justify-center p-4 md:p-6 overflow-hidden">
+      <div className="w-full max-w-6xl h-[650px] min-h-[650px]">
         <BorderAnimatedContainer>
-          <div className="flex h-full w-full overflow-hidden">
-            <div className="w-[320px] shrink-0 min-h-0 border-r border-slate-700/50 bg-slate-800/50 backdrop-blur-sm flex flex-col">
+          <div className="w-full h-full flex overflow-hidden rounded-2xl">
+            <div className="w-[320px] min-w-[320px] max-w-[320px] h-full border-r border-slate-700/50 bg-slate-800/50 backdrop-blur-sm flex flex-col">
               <div className="shrink-0">
                 <ProfileHeader />
                 <ActiveTabSwitch />
@@ -33,7 +38,7 @@ function ChatPage() {
               </div>
             </div>
 
-            <div className="flex-1 min-w-0 min-h-0 bg-slate-900/50 backdrop-blur-sm overflow-hidden flex flex-col">
+            <div className="flex-1 min-w-0 h-full bg-slate-900/50 backdrop-blur-sm overflow-hidden flex flex-col">
               {selectedUser ? <ChatContainer /> : <NoConversationPlaceholder />}
             </div>
           </div>
