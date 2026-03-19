@@ -1,118 +1,192 @@
 import User from "../model/user.model.js";
 import bcrypt from "bcryptjs";
-import { generateToken } from "../lib/utils.js";
-import { sendWelcomeEmail } from "../emails/emailHandler.js";
 import dotenv from "dotenv";
+import { v2 as cloudinary } from "cloudinary";
 
-dotenv.config()
+import { generateToken } from "../lib/utils.js";
+import { sendOTPmail, sendWelcomeEmail } from "../emails/emailHandler.js";
 
-//SIGNUP
-export const signup = async (req , res) =>{
-   const { fullname , email , password } = req.body;
+dotenv.config();
 
-   try {
+// SIGNUP
+export const signup = async (req, res) => {
+  const { fullname, email, password } = req.body;
 
-    if(!fullname || !email || !password){
-        return res.status(400).json({ message: 'All fields are required' });
+  try {
+    if (!fullname || !email || !password) {
+      return res.status(400).json({ message: "All fields are required" });
     }
 
-    if(password.length < 6){
-        return res.status(400).json({ message: 'Password must be at least 6 characters long' });
+    if (password.length < 6) {
+      return res
+        .status(400)
+        .json({ message: "Password must be at least 6 characters long" });
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    if(!emailRegex.test(email)){
-        return res.status(400).json({ message: 'Invalid email format' });
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ message: "Invalid email format" });
+    }
+
+    const existingUser = await User.findOne({ email });
+
+    if (existingUser && existingUser.isVerified) {
+      return res.status(400).json({ message: "Email already exists" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const hashedOtp = await bcrypt.hash(otp, 10);
+    const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    let user;
+
+    if (existingUser && !existingUser.isVerified) {
+      existingUser.fullname = fullname;
+      existingUser.password = hashedPassword;
+      existingUser.otp = hashedOtp;
+      existingUser.otpExpiry = otpExpiry;
+
+      user = await existingUser.save();
+    } else {
+      user = await User.create({
+        fullname,
+        email,
+        password: hashedPassword,
+        isVerified: false,
+        otp: hashedOtp,
+        otpExpiry,
+      });
+    }
+
+    await sendOTPmail(user.email, otp);
+
+    return res.status(200).json({
+      message: "OTP sent to your email",
+      email: user.email,
+    });
+  } catch (error) {
+    console.error("Signup error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+// VERIFY OTP
+export const verifyOtp = async (req, res) => {
+  const { email, otp } = req.body;
+
+  try {
+    if (!email || !otp) {
+      return res.status(400).json({ message: "Email and OTP are required" });
     }
 
     const user = await User.findOne({ email });
 
-    if(user){
-        return res.status(400).json({ message: 'Email already exists' });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password , salt);
+    if (user.isVerified) {
+      return res.status(400).json({ message: "User already verified" });
+    }
 
-    const newUser = new User({
-        fullname,
-        email,
-        password: hashedPassword,
-    });
+    if (!user.otp || !user.otpExpiry) {
+      return res.status(400).json({ message: "No OTP found. Please sign up again." });
+    }
 
-    await newUser.save();
+    if (user.otpExpiry < new Date()) {
+      return res.status(400).json({ message: "OTP expired" });
+    }
 
-    generateToken(newUser._id , res);
+    const isOTPCorrect = await bcrypt.compare(otp, user.otp);
 
-    res.status(201).json({
-        _id: newUser._id,
-        fullname: newUser.fullname,
-        email: newUser.email,
-        profilePic: newUser.profilePic,
-    });
+    if (!isOTPCorrect) {
+      return res.status(400).json({ message: "Invalid OTP" });
+    }
 
+    user.isVerified = true;
+    user.otp = null;
+    user.otpExpiry = null;
 
-    //send welcome email
+    await user.save();
+
+    generateToken(user._id, res);
+
     try {
-        await sendWelcomeEmail(newUser.email, newUser.fullname, process.env.CLIENT_URL);
+      await sendWelcomeEmail(user.email, user.fullname, process.env.CLIENT_URL);
     } catch (error) {
-        console.error("Failed to send welcome email:", error);
-        
+      console.error("Failed to send welcome email:", error);
     }
 
-   } catch (error) {
-    console.error('Error during signup:', error);
-    res.status(500).json({ message: 'Server error' });
-   }
+    return res.status(200).json({
+      message: "Email verified successfully",
+      _id: user._id,
+      fullname: user.fullname,
+      email: user.email,
+      profilePic: user.profilePic,
+    });
+  } catch (error) {
+    console.error("Verify OTP error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
 };
 
-//LOGIN
-export const login = async (req , res) =>{
-    const { email , password } = req.body;
+// LOGIN
+export const login = async (req, res) => {
+  const { email, password } = req.body;
 
   try {
-      if(!email || !password)
-    {
-        return res.status(400).json({
-            message: "All fields are required" 
-        })
+    if (!email || !password) {
+      return res.status(400).json({
+        message: "All fields are required",
+      });
     }
 
-    const user = await User.findOne({email}) 
-    
-        if(!user) return res.status(400).json({message: "Invalid Credentials"})
-    
+    const user = await User.findOne({ email });
 
-    const isPasswordCorrect = await bcrypt.compare(password , user.password)
-    if(!isPasswordCorrect) return res.status(400).json({message : "Invalid Credentials"})
+    if (!user) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
 
-    generateToken(user._id , res)
-    res.status(200).json({
-        _id: user._id,
-        fullname: user.fullname,
-        email: user.email,
-        profilePic: user.profilePic
+    if (!user.isVerified) {
+      return res.status(400).json({
+        message: "Please verify your email first",
+      });
+    }
 
-    })
-    
+    const isPasswordCorrect = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordCorrect) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    generateToken(user._id, res);
+
+    return res.status(200).json({
+      _id: user._id,
+      fullname: user.fullname,
+      email: user.email,
+      profilePic: user.profilePic,
+    });
   } catch (error) {
-    console.error('Error during login:', error);
-    res.status(500).json({ message: 'Server error' });
-    
+    console.error("Error during login:", error);
+    return res.status(500).json({ message: "Server error" });
   }
-}
+};
 
-//LOGOUT
-export const logout = (req , res) =>{
-    res.clearCookie("jwt");
-    res.status(200).json({message: "Logged out successfully"})
-}
+// LOGOUT
+export const logout = (req, res) => {
+  res.clearCookie("jwt");
+  return res.status(200).json({ message: "Logged out successfully" });
+};
 
-//UPDATE
+// UPDATE PROFILE
 export const updateProfile = async (req, res) => {
   try {
     const { profilePic } = req.body;
+
     if (!profilePic) {
       return res.status(400).json({ message: "Profile picture is required" });
     }
@@ -120,15 +194,16 @@ export const updateProfile = async (req, res) => {
     const userId = req.user._id;
 
     const uploadResponse = await cloudinary.uploader.upload(profilePic);
+
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       { profilePic: uploadResponse.secure_url },
       { new: true }
     ).select("-password");
 
-    res.status(200).json(updatedUser);
+    return res.status(200).json(updatedUser);
   } catch (error) {
     console.error("Error during profile update:", error);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: "Server error" });
   }
 };

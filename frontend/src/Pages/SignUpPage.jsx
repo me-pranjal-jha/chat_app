@@ -8,9 +8,11 @@ import {
   LockIcon,
   LoaderIcon,
 } from "lucide-react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 
 function SignUpPage() {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     fullname: "",
     email: "",
@@ -19,9 +21,15 @@ function SignUpPage() {
 
   const { signup, isSigningUp } = useAuthStore();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    signup(formData);
+
+    const result = await signup(formData);
+
+    if (result?.success) {
+      localStorage.setItem("verifyEmail", result.email || formData.email);
+      navigate("/verify-otp");
+    }
   };
 
   return (
@@ -29,7 +37,6 @@ function SignUpPage() {
       <div className="relative w-full max-w-5xl h-[580px]">
         <BorderAnimatedContainer>
           <div className="w-full h-full flex flex-col md:flex-row">
-            {/* LEFT SIDE */}
             <div className="w-full md:w-1/2 h-full p-10 md:p-14 flex items-center justify-center md:border-r border-slate-600/30">
               <div className="w-full max-w-[420px]">
                 <div className="text-center mb-8">
@@ -119,7 +126,6 @@ function SignUpPage() {
               </div>
             </div>
 
-            {/* RIGHT SIDE */}
             <div className="hidden md:flex md:w-1/2 h-full items-center justify-center relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-bl from-cyan-500/10 via-transparent to-slate-900/20" />
               <div className="absolute top-20 right-16 w-56 h-56 bg-cyan-500/10 rounded-full blur-3xl" />
