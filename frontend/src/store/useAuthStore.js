@@ -12,6 +12,8 @@ export const useAuthStore = create((set, get) => ({
   isSigningUp: false,
   isLoggingIn: false,
   isVerifyingOtp: false,
+  isForgotPasswordLoading: false,
+  isResetPasswordLoading: false,
   socket: null,
   onlineUsers: [],
 
@@ -72,10 +74,40 @@ export const useAuthStore = create((set, get) => ({
       set({ authUser: res.data });
       toast.success("Logged in successfully");
       get().connectSocket();
+      return { success: true };
     } catch (error) {
       toast.error(error.response?.data?.message || "Login failed");
+      return { success: false };
     } finally {
       set({ isLoggingIn: false });
+    }
+  },
+
+  forgotPassword: async (data) => {
+    set({ isForgotPasswordLoading: true });
+    try {
+      const res = await axiosInstance.post("/auth/forgot-password", data);
+      toast.success(res.data.message || "OTP sent to your email");
+      return { success: true };
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to send OTP");
+      return { success: false };
+    } finally {
+      set({ isForgotPasswordLoading: false });
+    }
+  },
+
+  resetPasswordWithOtp: async (data) => {
+    set({ isResetPasswordLoading: true });
+    try {
+      const res = await axiosInstance.post("/auth/reset-password", data);
+      toast.success(res.data.message || "Password reset successful");
+      return { success: true };
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to reset password");
+      return { success: false };
+    } finally {
+      set({ isResetPasswordLoading: false });
     }
   },
 
