@@ -4,7 +4,7 @@ export const welcomeEmailTemplate = (username, clientURL) => {
   <html>
   <head>
     <meta charset="UTF-8">
-    <title>Welcome to Chatify</title>
+    <title>Welcome to Chat-ting !</title>
   </head>
   <body style="margin:0;padding:0;background-color:#f4f6f8;font-family:Arial,Helvetica,sans-serif;">
     <table width="100%" cellpadding="0" cellspacing="0">
@@ -20,12 +20,12 @@ export const welcomeEmailTemplate = (username, clientURL) => {
             <tr>
               <td style="padding:40px;text-align:center;">
                 <h2 style="margin:0;color:#333;">
-                  Welcome to Chatify, ${username}! 🎉
+                  Welcome to Chat-ting, ${username}! 🎉
                 </h2>
 
                 <p style="color:#555;font-size:16px;margin-top:15px;line-height:1.6;">
                   We're excited to have you join our messaging platform.
-                  Chatify helps you connect with friends and colleagues instantly.
+                  Chat-ting helps you connect with friends and colleagues instantly.
                 </p>
 
                 <a 
@@ -54,7 +54,7 @@ export const welcomeEmailTemplate = (username, clientURL) => {
                 </p>
 
                 <p style="margin-top:10px;font-size:12px;color:#aaa;">
-                  © ${new Date().getFullYear()} Chatify. All rights reserved.
+                  © ${new Date().getFullYear()} Chat-ting. All rights reserved.
                 </p>
               </td>
             </tr>
@@ -94,7 +94,7 @@ export const otpEmailTemplate = (otp) => {
                 <h2 style="margin:0;color:#333;">Verify Your Email</h2>
 
                 <p style="color:#555;font-size:16px;margin-top:15px;line-height:1.6;">
-                  Use the OTP below to verify your Chatify account:
+                  Use the OTP below to verify your Chat-ting account:
                 </p>
 
                 <div style="margin:30px 0;">
@@ -126,7 +126,7 @@ export const otpEmailTemplate = (otp) => {
                 </p>
 
                 <p style="margin-top:10px;font-size:12px;color:#aaa;">
-                  © ${new Date().getFullYear()} Chatify. All rights reserved.
+                  © ${new Date().getFullYear()} Chat-ting. All rights reserved.
                 </p>
               </td>
             </tr>
@@ -199,7 +199,7 @@ export const resetPasswordOtpTemplate = (otp) => {
                 </p>
 
                 <p style="margin-top:10px;font-size:12px;color:#aaa;">
-                  © ${new Date().getFullYear()} Chatify. All rights reserved.
+                  © ${new Date().getFullYear()} Chat-ting. All rights reserved.
                 </p>
               </td>
             </tr>

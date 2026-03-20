@@ -38,7 +38,7 @@ export const sendWelcomeEmail = async (to, fullname, clientUrl) => {
     const { data, error } = await resend.emails.send({
       from: process.env.EMAIL_FROM,
       to,
-      subject: "Welcome to Chat App 🎉",
+      subject: "Welcome to Chat-ting! 🎉",
       html: `
         <div style="font-family: Arial, sans-serif; line-height: 1.6;">
           <h2>Welcome, ${fullname} 🎉</h2>
