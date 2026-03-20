@@ -1,15 +1,13 @@
-import React from "react";
-import { useState } from "react";
+import React, { useState } from "react";
 import { useAuthStore } from "../store/useAuthStore";
 import BorderAnimatedContainer from "../components/BorderAnimatedContainer";
 import {
   MessageCircleIcon,
-  UserIcon,
   MailIcon,
   LockIcon,
   LoaderIcon,
 } from "lucide-react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router-dom";
 
 function LoginPage() {
   const [formData, setFormData] = useState({
@@ -18,10 +16,11 @@ function LoginPage() {
   });
 
   const { login, isLoggingIn } = useAuthStore();
+  const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    login(formData);
+    await login(formData);
   };
 
   return (
@@ -56,6 +55,7 @@ function LoginPage() {
                         }
                         className="input w-full"
                         placeholder="24it3037@rgipt.ac.in"
+                        required
                       />
                     </div>
                   </div>
@@ -75,8 +75,19 @@ function LoginPage() {
                         }
                         className="input w-full"
                         placeholder="Enter your password"
+                        required
                       />
                     </div>
+                  </div>
+
+                  <div className="flex justify-end -mt-2">
+                    <button
+                      type="button"
+                      onClick={() => navigate("/forgot-password")}
+                      className="text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
+                    >
+                      Forgot Password?
+                    </button>
                   </div>
 
                   <button
@@ -94,7 +105,7 @@ function LoginPage() {
 
                 <div className="mt-6 text-center">
                   <Link to="/signup" className="auth-link">
-                    Don't have an account? Sign Up
+                    Don&apos;t have an account? Sign Up
                   </Link>
                 </div>
               </div>

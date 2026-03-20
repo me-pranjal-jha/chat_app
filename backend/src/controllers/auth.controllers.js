@@ -4,7 +4,11 @@ import dotenv from "dotenv";
 import { v2 as cloudinary } from "cloudinary";
 
 import { generateToken } from "../lib/utils.js";
-import { sendOTPmail, sendWelcomeEmail } from "../emails/emailHandler.js";
+import {
+  sendOTPmail,
+  sendWelcomeEmail,
+  sendResetPasswordOTPmail,
+} from "../emails/emailHandler.js";
 
 dotenv.config();
 
@@ -15,6 +19,10 @@ export const signup = async (req, res) => {
   try {
     if (!fullname || !email || !password) {
       return res.status(400).json({ message: "All fields are required" });
+    }
+
+    if (fullname.trim().length < 2) {
+      return res.status(400).json({ message: "Full name is too short" });
     }
 
     if (password.length < 6) {
@@ -29,7 +37,9 @@ export const signup = async (req, res) => {
       return res.status(400).json({ message: "Invalid email format" });
     }
 
-    const existingUser = await User.findOne({ email });
+    const normalizedEmail = email.toLowerCase().trim();
+
+    const existingUser = await User.findOne({ email: normalizedEmail });
 
     if (existingUser && existingUser.isVerified) {
       return res.status(400).json({ message: "Email already exists" });
@@ -39,12 +49,12 @@ export const signup = async (req, res) => {
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const hashedOtp = await bcrypt.hash(otp, 10);
-    const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
 
     let user;
 
     if (existingUser && !existingUser.isVerified) {
-      existingUser.fullname = fullname;
+      existingUser.fullname = fullname.trim();
       existingUser.password = hashedPassword;
       existingUser.otp = hashedOtp;
       existingUser.otpExpiry = otpExpiry;
@@ -52,8 +62,8 @@ export const signup = async (req, res) => {
       user = await existingUser.save();
     } else {
       user = await User.create({
-        fullname,
-        email,
+        fullname: fullname.trim(),
+        email: normalizedEmail,
         password: hashedPassword,
         isVerified: false,
         otp: hashedOtp,
@@ -73,7 +83,7 @@ export const signup = async (req, res) => {
   }
 };
 
-// VERIFY OTP
+// VERIFY SIGNUP OTP
 export const verifyOtp = async (req, res) => {
   const { email, otp } = req.body;
 
@@ -82,7 +92,8 @@ export const verifyOtp = async (req, res) => {
       return res.status(400).json({ message: "Email and OTP are required" });
     }
 
-    const user = await User.findOne({ email });
+    const normalizedEmail = email.toLowerCase().trim();
+    const user = await User.findOne({ email: normalizedEmail });
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -93,7 +104,9 @@ export const verifyOtp = async (req, res) => {
     }
 
     if (!user.otp || !user.otpExpiry) {
-      return res.status(400).json({ message: "No OTP found. Please sign up again." });
+      return res
+        .status(400)
+        .json({ message: "No OTP found. Please sign up again." });
     }
 
     if (user.otpExpiry < new Date()) {
@@ -115,7 +128,11 @@ export const verifyOtp = async (req, res) => {
     generateToken(user._id, res);
 
     try {
-      await sendWelcomeEmail(user.email, user.fullname, process.env.CLIENT_URL);
+      await sendWelcomeEmail(
+        user.email,
+        user.fullname,
+        process.env.CLIENT_URL || "http://localhost:5173"
+      );
     } catch (error) {
       console.error("Failed to send welcome email:", error);
     }
@@ -144,7 +161,8 @@ export const login = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ email });
+    const normalizedEmail = email.toLowerCase().trim();
+    const user = await User.findOne({ email: normalizedEmail });
 
     if (!user) {
       return res.status(400).json({ message: "Invalid credentials" });
@@ -180,6 +198,106 @@ export const login = async (req, res) => {
 export const logout = (req, res) => {
   res.clearCookie("jwt");
   return res.status(200).json({ message: "Logged out successfully" });
+};
+
+// FORGOT PASSWORD - SEND RESET OTP
+export const forgotPassword = async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+    const user = await User.findOne({ email: normalizedEmail });
+
+    if (!user) {
+      return res.status(404).json({ message: "Email does not exist" });
+    }
+
+    if (!user.isVerified) {
+      return res.status(400).json({
+        message: "Please verify your email first before resetting password",
+      });
+    }
+
+    const resetOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    const hashedResetOtp = await bcrypt.hash(resetOtp, 10);
+    const resetOtpExpiry = new Date(Date.now() + 10 * 60 * 1000);
+
+    user.resetOtp = hashedResetOtp;
+    user.resetOtpExpiry = resetOtpExpiry;
+
+    await user.save();
+
+    await sendResetPasswordOTPmail(user.email, resetOtp);
+
+    return res.status(200).json({
+      message: "Password reset OTP sent to your email",
+      email: user.email,
+    });
+  } catch (error) {
+    console.error("Forgot password error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+// RESET PASSWORD
+export const resetPassword = async (req, res) => {
+  const { email, otp, newPassword } = req.body;
+
+  try {
+    if (!email || !otp || !newPassword) {
+      return res
+        .status(400)
+        .json({ message: "Email, OTP and new password are required" });
+    }
+
+    if (newPassword.length < 6) {
+      return res
+        .status(400)
+        .json({ message: "New password must be at least 6 characters long" });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+    const user = await User.findOne({ email: normalizedEmail });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (!user.resetOtp || !user.resetOtpExpiry) {
+      return res.status(400).json({
+        message: "No reset OTP found. Please click forgot password again",
+      });
+    }
+
+    if (user.resetOtpExpiry < new Date()) {
+      return res.status(400).json({ message: "Reset OTP expired" });
+    }
+
+    const isOtpCorrect = await bcrypt.compare(otp, user.resetOtp);
+
+    if (!isOtpCorrect) {
+      return res.status(400).json({ message: "Invalid OTP" });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    user.password = hashedPassword;
+    user.resetOtp = null;
+    user.resetOtpExpiry = null;
+
+    await user.save();
+
+    return res.status(200).json({
+      message: "Password reset successful. Please login with your new password",
+    });
+  } catch (error) {
+    console.error("Reset password error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
 };
 
 // UPDATE PROFILE

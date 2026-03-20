@@ -1,19 +1,22 @@
-import { Navigate, Route, Routes } from "react-router";
+import { Navigate, Route, Routes } from "react-router-dom";
+import { useEffect } from "react";
+import { Toaster } from "react-hot-toast";
+
 import ChatPage from "./pages/ChatPage";
 import LoginPage from "./pages/LoginPage";
-import SignUpPage from "./Pages/SignUpPage";
-import VerifyOtpPage from "./Pages/VerifyOtpPage";
-import { useAuthStore } from "./store/useAuthStore";
-import { useEffect } from "react";
+import SignUpPage from "./pages/SignUpPage";
+import VerifyOtpPage from "./pages/VerifyOtpPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import PageLoader from "./components/PageLoader";
-import { Toaster } from "react-hot-toast";
+import { useAuthStore } from "./store/useAuthStore";
 
 function App() {
   const { checkAuth, isCheckingAuth, authUser } = useAuthStore();
 
   useEffect(() => {
-    useAuthStore.getState().checkAuth();
-  }, []);
+    checkAuth();
+  }, [checkAuth]);
 
   if (isCheckingAuth) return <PageLoader />;
 
@@ -28,16 +31,46 @@ function App() {
 
       <div className="relative z-20 h-screen w-full overflow-hidden">
         <Routes>
-          <Route path="/" element={authUser ? <ChatPage /> : <Navigate to="/login" />} />
-          <Route path="/login" element={!authUser ? <LoginPage /> : <Navigate to="/" />} />
-          <Route path="/signup" element={!authUser ? <SignUpPage /> : <Navigate to="/" />} />
-          <Route path="/verify-otp" element={!authUser ? <VerifyOtpPage /> : <Navigate to="/" />} />
+          <Route
+            path="/"
+            element={authUser ? <ChatPage /> : <Navigate to="/login" />}
+          />
+
+          <Route
+            path="/login"
+            element={!authUser ? <LoginPage /> : <Navigate to="/" />}
+          />
+
+          <Route
+            path="/signup"
+            element={!authUser ? <SignUpPage /> : <Navigate to="/" />}
+          />
+
+          <Route
+            path="/verify-otp"
+            element={!authUser ? <VerifyOtpPage /> : <Navigate to="/" />}
+          />
+
+          <Route
+            path="/forgot-password"
+            element={!authUser ? <ForgotPasswordPage /> : <Navigate to="/" />}
+          />
+
+          <Route
+            path="/reset-password"
+            element={!authUser ? <ResetPasswordPage /> : <Navigate to="/" />}
+          />
+
+          <Route
+            path="*"
+            element={<Navigate to={authUser ? "/" : "/login"} />}
+          />
         </Routes>
       </div>
 
-      <Toaster />
+      <Toaster position="top-center" reverseOrder={false} />
     </div>
   );
 }
 
-export default App;
+export default App; 
