@@ -8,7 +8,7 @@ import SignUpPage from "./Pages/SignUpPage";
 import VerifyOtpPage from "./Pages/VerifyOtpPage";
 import ForgotPasswordPage from "./Pages/ForgotPasswordPage";
 import ResetPasswordPage from "./Pages/ResetPasswordPage";
-import PageLoader from "./components/PageLoader";
+import PageLoader from "./Components/PageLoader";
 import { useAuthStore } from "./store/useAuthStore";
 
 function App() {
