@@ -2,12 +2,12 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { useEffect } from "react";
 import { Toaster } from "react-hot-toast";
 
-import ChatPage from "./pages/ChatPage";
-import LoginPage from "./pages/LoginPage";
-import SignUpPage from "./pages/SignUpPage";
-import VerifyOtpPage from "./pages/VerifyOtpPage";
-import ForgotPasswordPage from "./pages/ForgotPasswordPage";
-import ResetPasswordPage from "./pages/ResetPasswordPage";
+import ChatPage from "./Pages/ChatPage";
+import LoginPage from "./Pages/LoginPage";
+import SignUpPage from "./Pages/SignUpPage";
+import VerifyOtpPage from "./Pages/VerifyOtpPage";
+import ForgotPasswordPage from "./pPges/ForgotPasswordPage";
+import ResetPasswordPage from "./Pages/ResetPasswordPage";
 import PageLoader from "./components/PageLoader";
 import { useAuthStore } from "./store/useAuthStore";
 
