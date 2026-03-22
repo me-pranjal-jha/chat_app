@@ -1,13 +1,13 @@
 import { useEffect } from "react";
 import { useChatStore } from "../store/useChatStore";
 
-import BorderAnimatedContainer from "../components/BorderAnimatedContainer";
-import ProfileHeader from "../components/ProfileHeader";
-import ActiveTabSwitch from "../components/ActiveTabSwitch";
-import ChatsList from "../components/ChatsList";
-import ContactList from "../components/ContactList";
-import ChatContainer from "../components/ChatContainer";
-import NoConversationPlaceholder from "../components/NoConversationPlaceholder";
+import BorderAnimatedContainer from "../Components/BorderAnimatedContainer";
+import ProfileHeader from "../Components/ProfileHeader";
+import ActiveTabSwitch from "../Components/ActiveTabSwitch";
+import ChatsList from "../Components/ChatsList";
+import ContactList from "../Components/ContactList";
+import ChatContainer from "../Components/ChatContainer";
+import NoConversationPlaceholder from "../Components/NoConversationPlaceholder";
 
 function ChatPage() {
   const {
