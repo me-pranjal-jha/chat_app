@@ -6,7 +6,7 @@ import ChatPage from "./Pages/ChatPage";
 import LoginPage from "./Pages/LoginPage";
 import SignUpPage from "./Pages/SignUpPage";
 import VerifyOtpPage from "./Pages/VerifyOtpPage";
-import ForgotPasswordPage from "./pPges/ForgotPasswordPage";
+import ForgotPasswordPage from "./Pages/ForgotPasswordPage";
 import ResetPasswordPage from "./Pages/ResetPasswordPage";
 import PageLoader from "./components/PageLoader";
 import { useAuthStore } from "./store/useAuthStore";
