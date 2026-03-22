@@ -4,7 +4,7 @@ import { Toaster } from "react-hot-toast";
 
 import ChatPage from "./Pages/ChatPage";
 import LoginPage from "./Pages/LoginPage";
-import SignUpPage from "./Pages/SignUpPage";
+import SignUpPage from "./Pages/SignUpPage"; 
 import VerifyOtpPage from "./Pages/VerifyOtpPage";
 import ForgotPasswordPage from "./Pages/ForgotPasswordPage";
 import ResetPasswordPage from "./Pages/ResetPasswordPage";
