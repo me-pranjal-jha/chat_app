@@ -8,7 +8,7 @@ import {
   MailIcon,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import BorderAnimatedContainer from "../components/BorderAnimatedContainer";
+import BorderAnimatedContainer from "../Components/BorderAnimatedContainer";
 import { useAuthStore } from "../store/useAuthStore";
 
 function ResetPasswordPage() {

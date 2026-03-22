@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router";
 import { useAuthStore } from "../store/useAuthStore";
-import BorderAnimatedContainer from "../components/BorderAnimatedContainer";
+import BorderAnimatedContainer from "../Components/BorderAnimatedContainer";
 import {
   ShieldCheckIcon,
   MailIcon,

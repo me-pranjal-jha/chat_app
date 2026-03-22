@@ -6,7 +6,7 @@ import {
   LoaderIcon,
   ArrowLeftIcon,
 } from "lucide-react";
-import BorderAnimatedContainer from "../components/BorderAnimatedContainer";
+import BorderAnimatedContainer from "../Components/BorderAnimatedContainer";
 import { useAuthStore } from "../store/useAuthStore";
 
 function ForgotPasswordPage() {
