@@ -1,10 +1,12 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { useEffect } from "react";
 import { Toaster } from "react-hot-toast";
+import { useAuth0 } from "@auth0/auth0-react";
+import Auth0SessionSync from "./Components/Auth0SessionSync"; 
 
 import ChatPage from "./Pages/ChatPage";
 import LoginPage from "./Pages/LoginPage";
-import SignUpPage from "./Pages/SignUpPage"; 
+import SignUpPage from "./Pages/SignUpPage";
 import VerifyOtpPage from "./Pages/VerifyOtpPage";
 import ForgotPasswordPage from "./Pages/ForgotPasswordPage";
 import ResetPasswordPage from "./Pages/ResetPasswordPage";
@@ -12,16 +14,19 @@ import PageLoader from "./Components/PageLoader";
 import { useAuthStore } from "./store/useAuthStore";
 
 function App() {
-  const { checkAuth, isCheckingAuth, authUser } = useAuthStore(); 
+  const { checkAuth, isCheckingAuth, authUser } = useAuthStore();
+  const { isLoading: isAuth0Loading } = useAuth0();
 
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
 
-  if (isCheckingAuth) return <PageLoader />;
+  if (isCheckingAuth || isAuth0Loading) return <PageLoader />;
 
   return (
     <div className="min-h-screen bg-slate-950 relative overflow-hidden">
+      <Auth0SessionSync />
+
       <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-black" />
       <div className="absolute inset-0 opacity-20 bg-[linear-gradient(to_right,#38bdf820_1px,transparent_1px),linear-gradient(to_bottom,#38bdf820_1px,transparent_1px)] bg-[size:40px_40px]" />
       <div className="absolute top-[-100px] left-[-100px] w-[420px] h-[420px] bg-purple-600/30 rounded-full blur-[140px] animate-pulse" />
@@ -29,7 +34,7 @@ function App() {
       <div className="absolute top-[20%] right-[15%] w-[260px] h-[260px] bg-fuchsia-500/20 rounded-full blur-[120px] animate-bounce" />
       <div className="absolute bottom-[20%] left-[15%] w-[260px] h-[260px] bg-teal-400/20 rounded-full blur-[120px] animate-bounce" />
 
-      <div className="relative z-20 h-screen w-full overflow-hidden">
+      <div className="relative z-20 min-h-screen w-full">
         <Routes>
           <Route
             path="/"
@@ -73,4 +78,4 @@ function App() {
   );
 }
 
-export default App; 
+export default App;

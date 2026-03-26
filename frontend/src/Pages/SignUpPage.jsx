@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuthStore } from "../store/useAuthStore";
 import BorderAnimatedContainer from "../Components/BorderAnimatedContainer";
+import Auth0Button from "../Components/Auth0Button";
 import {
   MessageCircleIcon,
   UserIcon,
@@ -8,7 +9,7 @@ import {
   LockIcon,
   LoaderIcon,
 } from "lucide-react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router-dom";
 
 function SignUpPage() {
   const navigate = useNavigate();
@@ -33,11 +34,11 @@ function SignUpPage() {
   };
 
   return (
-    <div className="w-full min-h-screen flex items-center justify-center p-4">
-      <div className="relative w-full max-w-5xl h-[580px]">
+    <div className="w-full min-h-screen flex items-center justify-center p-6 md:p-8">
+      <div className="relative w-full max-w-5xl min-h-[620px]">
         <BorderAnimatedContainer>
           <div className="w-full h-full flex flex-col md:flex-row">
-            <div className="w-full md:w-1/2 h-full p-10 md:p-14 flex items-center justify-center md:border-r border-slate-600/30">
+            <div className="w-full md:w-1/2 h-full p-8 md:p-12 lg:p-14 flex items-center justify-center md:border-r border-slate-600/30">
               <div className="w-full max-w-[420px]">
                 <div className="text-center mb-8">
                   <MessageCircleIcon className="w-12 h-12 mx-auto text-slate-400 mb-4" />
@@ -116,6 +117,8 @@ function SignUpPage() {
                       "Create Account"
                     )}
                   </button>
+
+                  <Auth0Button mode="signup" />
                 </form>
 
                 <div className="mt-6 text-center">
@@ -135,7 +138,7 @@ function SignUpPage() {
                 <div className="relative flex items-center justify-center">
                   <div className="absolute w-[340px] h-[340px] rounded-full bg-cyan-400/10 blur-3xl" />
                   <img
-                    src="/signup.png"
+                    src="/signup.png" 
                     alt="Signup illustration"
                     className="relative w-full max-w-[420px] h-auto object-contain drop-shadow-[0_10px_30px_rgba(34,211,238,0.15)]"
                   />
@@ -153,6 +156,19 @@ function SignUpPage() {
                     <span className="auth-badge">Fast</span>
                     <span className="auth-badge">Secure</span>
                     <span className="auth-badge">Reliable</span>
+                  </div>
+
+                  <div className="mt-6 text-center max-w-sm mx-auto">
+                    <h4 className="text-sm font-semibold text-cyan-400 mb-2">
+                      ⚠️ Note
+                    </h4>
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      Email signup and login are temporarily unavailable due to
+                      domain configuration.{" "}
+                      <span className="text-cyan-400 font-medium">
+                        Please use Google Sign-In (Auth0) for seamless access.
+                      </span>
+                    </p>
                   </div>
                 </div>
               </div>

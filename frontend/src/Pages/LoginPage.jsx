@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useAuthStore } from "../store/useAuthStore";
 import BorderAnimatedContainer from "../Components/BorderAnimatedContainer";
+import Auth0Button from "../Components/Auth0Button";
 import {
   MessageCircleIcon,
   MailIcon,
@@ -101,6 +102,7 @@ function LoginPage() {
                       "Sign In"
                     )}
                   </button>
+                  <Auth0Button mode="login" />
                 </form>
 
                 <div className="mt-6 text-center">
@@ -139,6 +141,18 @@ function LoginPage() {
                     <span className="auth-badge">Fast</span>
                     <span className="auth-badge">Secure</span>
                     <span className="auth-badge">Reliable</span>
+                  </div>
+                  <div className="mt-6 text-center max-w-sm mx-auto">
+                    <h4 className="text-sm font-semibold text-cyan-400 mb-2">
+                      ⚠️ Note
+                    </h4>
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      Email signup and login are temporarily unavailable due to
+                      domain configuration.{" "}
+                      <span className="text-cyan-400 font-medium">
+                        Please use Google Sign-In (Auth0) for seamless access.
+                      </span>
+                    </p>
                   </div>
                 </div>
               </div>

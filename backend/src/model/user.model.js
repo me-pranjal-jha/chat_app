@@ -55,6 +55,14 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    authProvider: {
+      type: String,
+      default: "local",
+    },
+    auth0Id: {
+      type: String,
+      default: "",
+    }
   },
   { timestamps: true }
 );
