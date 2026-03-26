@@ -12,6 +12,7 @@ body,
 
 body {
   overflow: hidden;
+  overflow-y: auto;
 }
 
 @property --border-angle {

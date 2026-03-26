@@ -1,6 +1,7 @@
 import User from "../model/user.model.js";
 import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
+import crypto from "crypto";
 import { v2 as cloudinary } from "cloudinary";
 
 import { generateToken } from "../lib/utils.js";
@@ -58,6 +59,7 @@ export const signup = async (req, res) => {
       existingUser.password = hashedPassword;
       existingUser.otp = hashedOtp;
       existingUser.otpExpiry = otpExpiry;
+      existingUser.authProvider = "local";
 
       user = await existingUser.save();
     } else {
@@ -68,12 +70,14 @@ export const signup = async (req, res) => {
         isVerified: false,
         otp: hashedOtp,
         otpExpiry,
+        authProvider: "local",
       });
     }
 
     await sendOTPmail(user.email, otp);
 
     return res.status(200).json({
+      success: true,
       message: "OTP sent to your email",
       email: user.email,
     });
@@ -138,6 +142,7 @@ export const verifyOtp = async (req, res) => {
     }
 
     return res.status(200).json({
+      success: true,
       message: "Email verified successfully",
       _id: user._id,
       fullname: user.fullname,
@@ -183,6 +188,7 @@ export const login = async (req, res) => {
     generateToken(user._id, res);
 
     return res.status(200).json({
+      success: true,
       _id: user._id,
       fullname: user.fullname,
       email: user.email,
@@ -194,10 +200,70 @@ export const login = async (req, res) => {
   }
 };
 
+// AUTH0 LOGIN / GOOGLE OAUTH SYNC
+export const auth0Login = async (req, res) => {
+  try {
+    const tokenPayload = req.auth?.payload || {};
+
+    const email = tokenPayload.email || req.body?.profile?.email;
+    const fullname = tokenPayload.name || req.body?.profile?.name || "User";
+    const profilePic =
+      tokenPayload.picture || req.body?.profile?.picture || "";
+    const auth0Id = tokenPayload.sub || req.body?.profile?.sub || "";
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email not found in Auth0 token",
+      });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+
+    let user = await User.findOne({ email: normalizedEmail });
+
+    if (!user) {
+      user = await User.create({
+        fullname,
+        email: normalizedEmail,
+        password: crypto.randomBytes(24).toString("hex"),
+        isVerified: true,
+        profilePic,
+        authProvider: "auth0",
+        auth0Id,
+      });
+    } else {
+      user.fullname = user.fullname || fullname;
+      user.profilePic = profilePic || user.profilePic;
+      user.isVerified = true;
+      user.authProvider = "auth0";
+      user.auth0Id = auth0Id || user.auth0Id;
+      await user.save();
+    }
+
+    generateToken(user._id, res);
+
+    return res.status(200).json({
+      success: true,
+      message: "Auth0 login successful",
+      _id: user._id,
+      fullname: user.fullname,
+      email: user.email,
+      profilePic: user.profilePic,
+    });
+  } catch (error) {
+    console.error("Auth0 login error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
 // LOGOUT
 export const logout = (req, res) => {
   res.clearCookie("jwt");
-  return res.status(200).json({ message: "Logged out successfully" });
+  return res.status(200).json({ success: true, message: "Logged out successfully" });
 };
 
 // FORGOT PASSWORD - SEND RESET OTP
@@ -234,6 +300,7 @@ export const forgotPassword = async (req, res) => {
     await sendResetPasswordOTPmail(user.email, resetOtp);
 
     return res.status(200).json({
+      success: true,
       message: "Password reset OTP sent to your email",
       email: user.email,
     });
@@ -292,6 +359,7 @@ export const resetPassword = async (req, res) => {
     await user.save();
 
     return res.status(200).json({
+      success: true,
       message: "Password reset successful. Please login with your new password",
     });
   } catch (error) {
@@ -323,5 +391,19 @@ export const updateProfile = async (req, res) => {
   } catch (error) {
     console.error("Error during profile update:", error);
     return res.status(500).json({ message: "Server error" });
+  }
+};
+export const checkAuth = async (req, res) => {
+  try {
+    return res.status(200).json({
+      success: true,
+      user: req.user,
+    });
+  } catch (error) {
+    console.error("Check auth error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
   }
 };
