@@ -24,6 +24,7 @@ export const useAuthStore = create((set, get) => ({
       get().connectSocket();
     } catch (error) {
       console.log("Error in authCheck:", error);
+      get().disconnectSocket();
       set({ authUser: null });
     } finally {
       set({ isCheckingAuth: false });
@@ -54,7 +55,7 @@ export const useAuthStore = create((set, get) => ({
     try {
       const res = await axiosInstance.post("/auth/verify-otp", data);
 
-      set({ authUser: res.data });
+      set({ authUser: res.data.user || res.data });
       toast.success(res.data.message || "OTP verified successfully");
       get().connectSocket();
 
@@ -71,11 +72,12 @@ export const useAuthStore = create((set, get) => ({
     set({ isLoggingIn: true });
     try {
       const res = await axiosInstance.post("/auth/login", data);
-      set({ authUser: res.data });
+      set({ authUser: res.data.user || res.data });
       toast.success("Logged in successfully");
       get().connectSocket();
       return { success: true };
     } catch (error) {
+      set({ authUser: null });
       toast.error(error.response?.data?.message || "Login failed");
       return { success: false };
     } finally {
@@ -115,18 +117,20 @@ export const useAuthStore = create((set, get) => ({
     try {
       await axiosInstance.post("/auth/logout");
       get().disconnectSocket();
-      set({ authUser: null });
+      set({ authUser: null, onlineUsers: [] });
       toast.success("Logged out successfully");
+      return { success: true };
     } catch (error) {
-      toast.error("Error logging out");
+      toast.error(error.response?.data?.message || "Error logging out");
       console.log("Logout error:", error);
+      return { success: false };
     }
   },
 
   updateProfile: async (data) => {
     try {
       const res = await axiosInstance.put("/auth/update-profile", data);
-      set({ authUser: res.data });
+      set({ authUser: res.data.user || res.data });
       toast.success("Profile updated successfully");
     } catch (error) {
       console.log("Error in update profile:", error);
@@ -167,7 +171,7 @@ export const useAuthStore = create((set, get) => ({
     const socket = get().socket;
     if (socket) {
       socket.disconnect();
-      set({ socket: null, onlineUsers: [] });
     }
+    set({ socket: null, onlineUsers: [] });
   },
 }));
