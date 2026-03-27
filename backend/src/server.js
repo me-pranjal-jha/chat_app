@@ -28,6 +28,9 @@ const PORT = ENV.PORT || 3000;
 
 const allowedOrigins = ["http://localhost:5173", ENV.CLIENT_URL].filter(Boolean);
 
+// ✅ Static files FIRST - before CORS so assets are never blocked
+app.use(express.static(frontendDistPath));
+
 app.use(
   cors({
     origin: (origin, callback) => {
@@ -46,13 +49,10 @@ app.use(cookieParser());
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 
-// Temporary debug logging
 app.use((req, res, next) => {
   console.log(`➡️  ${req.method} ${req.url}`);
   next();
 });
-
-app.use(express.static(frontendDistPath));
 
 app.get("*", (req, res) => {
   console.log(`🔴 Catch-all hit for: ${req.url}`);
