@@ -18,17 +18,17 @@ const __dirname = path.dirname(__filename);
 const frontendDistPath = path.resolve(__dirname, "../../frontend/dist");
 
 if (!fs.existsSync(frontendDistPath)) {
-  console.error("❌ Frontend dist not found at:", frontendDistPath);
+  console.error("Frontend dist not found at:", frontendDistPath);
 } else {
-  console.log("✅ Serving frontend from:", frontendDistPath);
-  console.log("📁 Dist contents:", fs.readdirSync(frontendDistPath));
+  console.log("Serving frontend from:", frontendDistPath);
+  console.log("Dist contents:", fs.readdirSync(frontendDistPath));
 }
 
 const PORT = ENV.PORT || 3000;
 
 const allowedOrigins = ["http://localhost:5173", ENV.CLIENT_URL].filter(Boolean);
 
-// ✅ Static files FIRST - before CORS so assets are never blocked
+
 app.use(express.static(frontendDistPath));
 
 app.use(
@@ -55,7 +55,7 @@ app.use((req, res, next) => {
 });
 
 app.get("*", (req, res) => {
-  console.log(`🔴 Catch-all hit for: ${req.url}`);
+  console.log(`Catch-all hit for: ${req.url}`);
   res.sendFile(path.join(frontendDistPath, "index.html"));
 });
 
