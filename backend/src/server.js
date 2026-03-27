@@ -21,6 +21,7 @@ if (!fs.existsSync(frontendDistPath)) {
   console.error("❌ Frontend dist not found at:", frontendDistPath);
 } else {
   console.log("✅ Serving frontend from:", frontendDistPath);
+   console.log("📁 Dist contents:", fs.readdirSync(frontendDistPath));
 }
 
 const PORT = ENV.PORT || 3000;
