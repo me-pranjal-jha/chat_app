@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { LogOutIcon, VolumeOffIcon, Volume2Icon } from "lucide-react";
+import { useAuth0 } from "@auth0/auth0-react";
 import { useAuthStore } from "../store/useAuthStore";
 import { useChatStore } from "../store/useChatStore";
 
@@ -7,6 +8,7 @@ const mouseClickSound = new Audio("/sounds/mouse-click.mp3");
 
 function ProfileHeader() {
   const { logout, authUser, updateProfile } = useAuthStore();
+  const { logout: auth0Logout } = useAuth0();
   const { isSoundEnabled, toggleSound } = useChatStore();
   const [selectedImg, setSelectedImg] = useState(null);
 
@@ -24,6 +26,11 @@ function ProfileHeader() {
       setSelectedImg(base64Image);
       await updateProfile({ profilePic: base64Image });
     };
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    auth0Logout({ logoutParams: { returnTo: window.location.origin } });
   };
 
   return (
@@ -60,7 +67,6 @@ function ProfileHeader() {
             <h3 className="text-slate-200 font-medium text-base max-w-[180px] truncate">
               {authUser.fullname}
             </h3>
-
             <p className="text-slate-400 text-xs">Online</p>
           </div>
         </div>
@@ -70,7 +76,7 @@ function ProfileHeader() {
           {/* LOGOUT BTN */}
           <button
             className="text-slate-400 hover:text-slate-200 transition-colors"
-            onClick={logout}
+            onClick={handleLogout}
           >
             <LogOutIcon className="size-5" />
           </button>
@@ -79,9 +85,10 @@ function ProfileHeader() {
           <button
             className="text-slate-400 hover:text-slate-200 transition-colors"
             onClick={() => {
-              // play click sound before toggling
-              mouseClickSound.currentTime = 0; // reset to start
-              mouseClickSound.play().catch((error) => console.log("Audio play failed:", error));
+              mouseClickSound.currentTime = 0;
+              mouseClickSound.play().catch((error) =>
+                console.log("Audio play failed:", error)
+              );
               toggleSound();
             }}
           >
@@ -96,4 +103,5 @@ function ProfileHeader() {
     </div>
   );
 }
+
 export default ProfileHeader;

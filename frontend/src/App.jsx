@@ -2,7 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { useEffect } from "react";
 import { Toaster } from "react-hot-toast";
 import { useAuth0 } from "@auth0/auth0-react";
-import Auth0SessionSync from "./Components/Auth0SessionSync"; 
+import Auth0SessionSync from "./Components/Auth0SessionSync";
 
 import ChatPage from "./Pages/ChatPage";
 import LoginPage from "./Pages/LoginPage";
@@ -38,37 +38,49 @@ function App() {
         <Routes>
           <Route
             path="/"
-            element={authUser ? <ChatPage /> : <Navigate to="/login" />}
+            element={authUser ? <ChatPage /> : <Navigate to="/login" replace />}
           />
 
           <Route
             path="/login"
-            element={!authUser ? <LoginPage /> : <Navigate to="/" />}
+            element={!authUser ? <LoginPage /> : <Navigate to="/" replace />}
           />
 
           <Route
             path="/signup"
-            element={!authUser ? <SignUpPage /> : <Navigate to="/" />}
+            element={!authUser ? <SignUpPage /> : <Navigate to="/" replace />}
           />
 
           <Route
             path="/verify-otp"
-            element={!authUser ? <VerifyOtpPage /> : <Navigate to="/" />}
+            element={!authUser ? <VerifyOtpPage /> : <Navigate to="/" replace />}
           />
 
           <Route
             path="/forgot-password"
-            element={!authUser ? <ForgotPasswordPage /> : <Navigate to="/" />}
+            element={
+              !authUser ? (
+                <ForgotPasswordPage />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
           />
 
           <Route
             path="/reset-password"
-            element={!authUser ? <ResetPasswordPage /> : <Navigate to="/" />}
+            element={
+              !authUser ? (
+                <ResetPasswordPage />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
           />
 
           <Route
             path="*"
-            element={<Navigate to={authUser ? "/" : "/login"} />}
+            element={<Navigate to={authUser ? "/" : "/login"} replace />}
           />
         </Routes>
       </div>

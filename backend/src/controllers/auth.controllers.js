@@ -260,10 +260,51 @@ export const auth0Login = async (req, res) => {
   }
 };
 
-// LOGOUT
-export const logout = (req, res) => {
-  res.clearCookie("jwt");
-  return res.status(200).json({ success: true, message: "Logged out successfully" });
+//CHECK AUTH 
+
+export const checkAuth = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      user: req.user,
+    });
+  } catch (error) {
+    console.log("Error in checkAuth controller:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
+
+// logout
+export const logout = async (req, res) => {
+  try {
+    res.clearCookie("jwt", {
+      httpOnly: true,
+      sameSite: "strict",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Logged out successfully",
+    });
+  } catch (error) {
+    console.log("Error in logout controller:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
 };
 
 // FORGOT PASSWORD - SEND RESET OTP
@@ -391,19 +432,5 @@ export const updateProfile = async (req, res) => {
   } catch (error) {
     console.error("Error during profile update:", error);
     return res.status(500).json({ message: "Server error" });
-  }
-};
-export const checkAuth = async (req, res) => {
-  try {
-    return res.status(200).json({
-      success: true,
-      user: req.user,
-    });
-  } catch (error) {
-    console.error("Check auth error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Server error",
-    });
   }
 };
