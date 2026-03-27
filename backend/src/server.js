@@ -2,6 +2,7 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import path from "path";
 import cors from "cors";
+import { fileURLToPath } from "url";
 
 import authRoutes from "./routes/auth.routes.js";
 import messageRoutes from "./routes/message.routes.js";
@@ -11,13 +12,13 @@ import { app, server } from "./lib/socket.js";
 
 connectDB();
 
-const __dirname = path.resolve();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const frontendDistPath = path.resolve(__dirname, "../../frontend/dist");
+
 const PORT = ENV.PORT || 3000;
 
-const allowedOrigins = [
-  "http://localhost:5173",
-  ENV.CLIENT_URL,
-].filter(Boolean);
+const allowedOrigins = ["http://localhost:5173", ENV.CLIENT_URL].filter(Boolean);
 
 app.use(
   cors({
@@ -37,10 +38,10 @@ app.use(cookieParser());
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 
-app.use(express.static(path.join(__dirname, "../frontend/dist")));
+app.use(express.static(frontendDistPath));
 
 app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
+  res.sendFile(path.join(frontendDistPath, "index.html"));
 });
 
 server.listen(PORT, () => {
