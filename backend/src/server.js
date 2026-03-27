@@ -1,6 +1,7 @@
 import express from "express";
 import cookieParser from "cookie-parser";
 import path from "path";
+import fs from "fs";
 import cors from "cors";
 import { fileURLToPath } from "url";
 
@@ -14,7 +15,13 @@ connectDB();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const frontendDistPath = path.join(process.cwd(), "frontend", "dist");
+const frontendDistPath = path.resolve(__dirname, "../../frontend/dist");
+
+if (!fs.existsSync(frontendDistPath)) {
+  console.error("❌ Frontend dist not found at:", frontendDistPath);
+} else {
+  console.log("✅ Serving frontend from:", frontendDistPath);
+}
 
 const PORT = ENV.PORT || 3000;
 
