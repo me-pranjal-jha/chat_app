@@ -17,19 +17,19 @@ function ChatContainer() {
   } = useChatStore();
 
   const { authUser } = useAuthStore();
-  const messageEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
 
   useEffect(() => {
     if (!selectedUser?._id) return;
-
     getMessagesByUserId(selectedUser._id);
     subscribeToMessages();
-
     return () => unsubscribeFromMessages();
   }, [selectedUser?._id]);
 
   useEffect(() => {
-    messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
   }, [messages]);
 
   return (
@@ -38,7 +38,8 @@ function ChatContainer() {
         <ChatHeader />
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto px-6 py-6">
+      {/* ✅ ref added here, old messageEndRef removed */}
+      <div ref={messagesContainerRef} className="flex-1 min-h-0 overflow-y-auto px-6 py-6">
         {isMessagesLoading ? (
           <MessagesLoadingSkeleton />
         ) : messages.length > 0 ? (
@@ -62,9 +63,7 @@ function ChatContainer() {
                       className="rounded-lg mb-2 max-h-60 w-auto object-cover"
                     />
                   )}
-
                   {msg.text && <p>{msg.text}</p>}
-
                   <p className="text-xs mt-1 opacity-75">
                     {new Date(msg.createdAt).toLocaleTimeString([], {
                       hour: "2-digit",
@@ -74,7 +73,6 @@ function ChatContainer() {
                 </div>
               </div>
             ))}
-            <div ref={messageEndRef} />
           </div>
         ) : (
           <NoChatHistoryPlaceholder name={selectedUser.fullname} />
