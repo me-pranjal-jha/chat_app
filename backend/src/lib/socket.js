@@ -7,10 +7,8 @@ import { socketAuthMiddleware } from "../middleware/socket.auth.middleware.js";
 const app = express();
 const server = http.createServer(app);
 
-// this is for storing online users
-const userSocketMap = {}; // { userId: socketId }
+const userSocketMap = {};
 
-// we will use this function to check if the user is online or not
 export function getReceiverSocketId(userId) {
   return userSocketMap[userId];
 }
@@ -22,7 +20,6 @@ const io = new Server(server, {
   },
 });
 
-// apply authentication middleware to all socket connections
 io.use(socketAuthMiddleware);
 
 io.on("connection", (socket) => {
@@ -31,8 +28,23 @@ io.on("connection", (socket) => {
   const userId = socket.userId;
   userSocketMap[userId] = socket.id;
 
-  // send online users to all connected clients
   io.emit("getOnlineUsers", Object.keys(userSocketMap));
+
+  // ADDED: forward typing event to receiver
+  socket.on("typing", ({ receiverId }) => {
+    const receiverSocketId = getReceiverSocketId(receiverId);
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("typing", { senderId: userId });
+    }
+  });
+
+  // ADDED: forward stopTyping event to receiver
+  socket.on("stopTyping", ({ receiverId }) => {
+    const receiverSocketId = getReceiverSocketId(receiverId);
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("stopTyping", { senderId: userId });
+    }
+  });
 
   socket.on("disconnect", () => {
     console.log("A user disconnected", socket.user.fullname);
