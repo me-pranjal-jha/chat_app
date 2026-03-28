@@ -14,10 +14,14 @@ function ChatContainer() {
     isMessagesLoading,
     subscribeToMessages,
     unsubscribeFromMessages,
+    typingUsers, //  ADDED
   } = useChatStore();
 
   const { authUser } = useAuthStore();
   const messagesContainerRef = useRef(null);
+
+  //  ADDED: check if selected user is currently typing
+  const isTyping = typingUsers[selectedUser?._id];
 
   useEffect(() => {
     if (!selectedUser?._id) return;
@@ -26,11 +30,12 @@ function ChatContainer() {
     return () => unsubscribeFromMessages();
   }, [selectedUser?._id]);
 
+  //  CHANGED: added isTyping so container scrolls when typing indicator appears
   useEffect(() => {
     if (messagesContainerRef.current) {
       messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, isTyping]);
 
   return (
     <div className="flex flex-col h-full min-h-0 overflow-hidden">
@@ -38,7 +43,6 @@ function ChatContainer() {
         <ChatHeader />
       </div>
 
-      {/* ✅ ref added here, old messageEndRef removed */}
       <div ref={messagesContainerRef} className="flex-1 min-h-0 overflow-y-auto px-6 py-6">
         {isMessagesLoading ? (
           <MessagesLoadingSkeleton />
@@ -73,6 +77,20 @@ function ChatContainer() {
                 </div>
               </div>
             ))}
+
+            {/*  ADDED: typing indicator */}
+            {isTyping && (
+              <div className="chat chat-start">
+                <div className="chat-bubble bg-slate-800 text-green-400 text-sm flex items-center gap-2">
+                  <span>typing</span>
+                  <span className="flex gap-0.5 items-center">
+                    <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <NoChatHistoryPlaceholder name={selectedUser.fullname} />
@@ -86,4 +104,4 @@ function ChatContainer() {
   );
 }
 
-export default ChatContainer;
+export default ChatContainer
