@@ -12,22 +12,36 @@ export const useChatStore = create((set, get) => ({
   isUsersLoading: false,
   isMessagesLoading: false,
   isSoundEnabled: JSON.parse(localStorage.getItem("isSoundEnabled")) === true,
-  typingUsers: {}, //  ADDED
+  typingUsers: {},
+  unreadCounts: {}, // 
 
   toggleSound: () => {
     localStorage.setItem("isSoundEnabled", !get().isSoundEnabled);
     set({ isSoundEnabled: !get().isSoundEnabled });
   },
 
-  //  ADDED: sets typing state for a specific user
   setTyping: (userId, isTyping) => {
     set((state) => ({
       typingUsers: { ...state.typingUsers, [userId]: isTyping },
     }));
   },
 
+  // now clears unread count when a user is selected
+  setSelectedUser: (selectedUser) => {
+    set({ selectedUser });
+    if (selectedUser) get().clearUnread(selectedUser._id);
+  },
+
+  // clears unread count for a specific user
+  clearUnread: (userId) => {
+    set((state) => {
+      const updated = { ...state.unreadCounts };
+      delete updated[userId];
+      return { unreadCounts: updated };
+    });
+  },
+
   setActiveTab: (tab) => set({ activeTab: tab }),
-  setSelectedUser: (selectedUser) => set({ selectedUser }),
 
   getAllContacts: async () => {
     set({ isUsersLoading: true });
@@ -97,28 +111,43 @@ export const useChatStore = create((set, get) => ({
 
     const socket = useAuthStore.getState().socket;
 
+    //now also handles unread counts for background messages
     socket.on("newMessage", (newMessage) => {
-      const isMessageSentFromSelectedUser = newMessage.senderId === selectedUser._id;
-      if (!isMessageSentFromSelectedUser) return;
+      const { selectedUser: currentSelectedUser, unreadCounts } = get();
+      const isFromSelectedUser = newMessage.senderId === currentSelectedUser?._id;
 
-      const currentMessages = get().messages;
-      set({ messages: [...currentMessages, newMessage] });
+      if (isFromSelectedUser) {
+        // message is from the open chat — add to messages normally
+        set({ messages: [...get().messages, newMessage] });
 
-      if (get().isSoundEnabled) {
-        const notificationSound = new Audio("/sounds/notification.mp3");
-        notificationSound.currentTime = 0;
-        notificationSound.play().catch((e) => console.log("Audio play failed:", e));
+        if (get().isSoundEnabled) {
+          const notificationSound = new Audio("/sounds/notification.mp3");
+          notificationSound.currentTime = 0;
+          notificationSound.play().catch((e) => console.log("Audio play failed:", e));
+        }
+      } else {
+        // message is from a different user — increment their unread count
+        set({
+          unreadCounts: {
+            ...unreadCounts,
+            [newMessage.senderId]: (unreadCounts[newMessage.senderId] || 0) + 1,
+          },
+        });
+
+        if (get().isSoundEnabled) {
+          const notificationSound = new Audio("/sounds/notification.mp3");
+          notificationSound.currentTime = 0;
+          notificationSound.play().catch((e) => console.log("Audio play failed:", e));
+        }
       }
     });
 
-    //  ADDED: listen for typing events from selected user only
     socket.on("typing", ({ senderId }) => {
       if (senderId === selectedUser._id) {
         get().setTyping(senderId, true);
       }
     });
 
-    //  ADDED: listen for stopTyping events from selected user only
     socket.on("stopTyping", ({ senderId }) => {
       if (senderId === selectedUser._id) {
         get().setTyping(senderId, false);
@@ -129,7 +158,7 @@ export const useChatStore = create((set, get) => ({
   unsubscribeFromMessages: () => {
     const socket = useAuthStore.getState().socket;
     socket.off("newMessage");
-    socket.off("typing");       //  ADDED
-    socket.off("stopTyping");   //  ADDED
+    socket.off("typing");
+    socket.off("stopTyping");
   },
 }));
