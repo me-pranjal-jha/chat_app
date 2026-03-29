@@ -13,7 +13,7 @@ export const useChatStore = create((set, get) => ({
   isMessagesLoading: false,
   isSoundEnabled: JSON.parse(localStorage.getItem("isSoundEnabled")) === true,
   typingUsers: {},
-  unreadCounts: {}, // 
+  unreadCounts: {},
 
   toggleSound: () => {
     localStorage.setItem("isSoundEnabled", !get().isSoundEnabled);
@@ -26,13 +26,11 @@ export const useChatStore = create((set, get) => ({
     }));
   },
 
-  // now clears unread count when a user is selected
   setSelectedUser: (selectedUser) => {
     set({ selectedUser });
     if (selectedUser) get().clearUnread(selectedUser._id);
   },
 
-  // clears unread count for a specific user
   clearUnread: (userId) => {
     set((state) => {
       const updated = { ...state.unreadCounts };
@@ -67,11 +65,18 @@ export const useChatStore = create((set, get) => ({
     }
   },
 
+  // CHANGED: emits markSeen when chat is opened
   getMessagesByUserId: async (userId) => {
     set({ isMessagesLoading: true });
     try {
       const res = await axiosInstance.get(`/messages/${userId}`);
       set({ messages: res.data });
+
+      // tell backend to mark all messages from this user as seen
+      const socket = useAuthStore.getState().socket;
+      if (socket) {
+        socket.emit("markSeen", { senderId: userId });
+      }
     } catch (error) {
       toast.error(error.response?.data?.message || "Something went wrong");
     } finally {
@@ -92,12 +97,16 @@ export const useChatStore = create((set, get) => ({
       image: messageData.image,
       createdAt: new Date().toISOString(),
       isOptimistic: true,
+      status: "sent", 
     };
 
     set({ messages: [...messages, optimisticMessage] });
 
     try {
-      const res = await axiosInstance.post(`/messages/send/${selectedUser._id}`, messageData);
+      const res = await axiosInstance.post(
+        `/messages/send/${selectedUser._id}`,
+        messageData
+      );
       set({ messages: messages.concat(res.data) });
     } catch (error) {
       set({ messages: messages });
@@ -111,35 +120,60 @@ export const useChatStore = create((set, get) => ({
 
     const socket = useAuthStore.getState().socket;
 
-    //now also handles unread counts for background messages
     socket.on("newMessage", (newMessage) => {
       const { selectedUser: currentSelectedUser, unreadCounts } = get();
-      const isFromSelectedUser = newMessage.senderId === currentSelectedUser?._id;
+      const isFromSelectedUser =
+        newMessage.senderId === currentSelectedUser?._id;
 
       if (isFromSelectedUser) {
-        // message is from the open chat — add to messages normally
         set({ messages: [...get().messages, newMessage] });
 
         if (get().isSoundEnabled) {
           const notificationSound = new Audio("/sounds/notification.mp3");
           notificationSound.currentTime = 0;
-          notificationSound.play().catch((e) => console.log("Audio play failed:", e));
+          notificationSound.play().catch((e) =>
+            console.log("Audio play failed:", e)
+          );
         }
       } else {
-        // message is from a different user — increment their unread count
         set({
           unreadCounts: {
             ...unreadCounts,
-            [newMessage.senderId]: (unreadCounts[newMessage.senderId] || 0) + 1,
+            [newMessage.senderId]:
+              (unreadCounts[newMessage.senderId] || 0) + 1,
           },
         });
 
         if (get().isSoundEnabled) {
           const notificationSound = new Audio("/sounds/notification.mp3");
           notificationSound.currentTime = 0;
-          notificationSound.play().catch((e) => console.log("Audio play failed:", e));
+          notificationSound.play().catch((e) =>
+            console.log("Audio play failed:", e)
+          );
         }
       }
+    });
+
+    // ✅ ADDED: update messages to delivered when receiver comes online
+    socket.on("messagesDelivered", ({ receiverId }) => {
+      set((state) => ({
+        messages: state.messages.map((m) =>
+          m.receiverId === receiverId && m.status === "sent"
+            ? { ...m, status: "delivered" }
+            : m
+        ),
+      }));
+    });
+
+    // ADDED: update messages to seen when receiver opens the chat
+    socket.on("messagesSeen", ({ receiverId }) => {
+      set((state) => ({
+        messages: state.messages.map((m) =>
+          m.receiverId === receiverId
+            ? { ...m, status: "seen" }
+            : m
+        ),
+      }));
     });
 
     socket.on("typing", ({ senderId }) => {
@@ -158,6 +192,8 @@ export const useChatStore = create((set, get) => ({
   unsubscribeFromMessages: () => {
     const socket = useAuthStore.getState().socket;
     socket.off("newMessage");
+    socket.off("messagesDelivered"); 
+    socket.off("messagesSeen");      
     socket.off("typing");
     socket.off("stopTyping");
   },

@@ -34,7 +34,6 @@ const userSchema = new mongoose.Schema(
       default: "",
     },
 
-    // Signup email verification OTP
     otp: {
       type: String,
       default: null,
@@ -45,7 +44,6 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
 
-    // Forgot password OTP
     resetOtp: {
       type: String,
       default: null,
@@ -55,14 +53,22 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+
     authProvider: {
       type: String,
       default: "local",
     },
+
     auth0Id: {
       type: String,
       default: "",
-    }
+    },
+
+   
+    lastSeen: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );
