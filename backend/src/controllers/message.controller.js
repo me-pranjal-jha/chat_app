@@ -59,15 +59,10 @@ export const sendMessage = async (req, res) => {
     let imageUrl = "";
 
     if (image) {
-      console.log("Image exists, uploading to Cloudinary...");
-      console.log("Cloudinary name:", ENV.CLOUDINARY_CLOUD_NAME);
-      console.log("Image starts with:", image.substring(0, 30));
-
       const uploadResponse = await cloudinary.uploader.upload(image, {
         folder: "chat-app-messages",
         resource_type: "image",
       });
-
       imageUrl = uploadResponse.secure_url;
     }
 
@@ -87,11 +82,7 @@ export const sendMessage = async (req, res) => {
 
     res.status(201).json(newMessage);
   } catch (error) {
-    console.log("Error in sendMessage controller:");
-    console.log("message:", error.message);
-    console.log("http_code:", error.http_code);
-    console.log("error object:", error);
-
+    console.log("Error in sendMessage controller:", error.message);
     res.status(500).json({
       error: "Internal server error",
       details: error.message,
@@ -124,6 +115,67 @@ export const getChatPartners = async (req, res) => {
     res.status(200).json(chatPartners);
   } catch (error) {
     console.error("Error in getChatPartners:", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const searchMessages = async (req, res) => {
+  try {
+    const myId = req.user._id;
+    const { id: otherUserId } = req.params;
+    const { query } = req.query;
+
+    if (!query || query.trim() === "") {
+      return res.status(400).json({ message: "Search query is required" });
+    }
+
+    const messages = await Message.find({
+      $or: [
+        { senderId: myId, receiverId: otherUserId },
+        { senderId: otherUserId, receiverId: myId },
+      ],
+      text: { $regex: query.trim(), $options: "i" },
+    }).sort({ createdAt: -1 });
+
+    res.status(200).json(messages);
+  } catch (error) {
+    console.error("Error in searchMessages:", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+// delete message for everyone
+export const deleteMessage = async (req, res) => {
+  try {
+    const { id: messageId } = req.params;
+    const userId = req.user._id;
+
+    const message = await Message.findById(messageId);
+
+    if (!message) {
+      return res.status(404).json({ message: "Message not found" });
+    }
+
+    // only sender can delete
+    if (message.senderId.toString() !== userId.toString()) {
+      return res.status(403).json({ message: "You can only delete your own messages" });
+    }
+
+    // mark as deleted instead of removing from DB
+    message.isDeleted = true;
+    message.text = null;
+    message.image = null;
+    await message.save();
+
+    // notify receiver in real time
+    const receiverSocketId = getReceiverSocketId(message.receiverId.toString());
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("messageDeleted", { messageId });
+    }
+
+    res.status(200).json({ success: true, messageId });
+  } catch (error) {
+    console.error("Error in deleteMessage:", error.message);
     res.status(500).json({ error: "Internal server error" });
   }
 };

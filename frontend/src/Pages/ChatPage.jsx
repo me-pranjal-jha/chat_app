@@ -8,9 +8,17 @@ import ChatsList from "../Components/ChatsList";
 import ContactList from "../Components/ContactList";
 import ChatContainer from "../Components/ChatContainer";
 import NoConversationPlaceholder from "../Components/NoConversationPlaceholder";
+import SearchBar from "../Components/SearchBar";
 
 function ChatPage() {
-  const { activeTab, selectedUser, getAllContacts, getMyChatPartners } = useChatStore();
+  const {
+    activeTab,
+    selectedUser,
+    getAllContacts,
+    getMyChatPartners,
+    searchQuery,
+    setSearchQuery,
+  } = useChatStore();
 
   useEffect(() => {
     getAllContacts();
@@ -22,8 +30,7 @@ function ChatPage() {
       <div className="w-full max-w-6xl h-full md:h-[650px] md:min-h-[650px]">
         <BorderAnimatedContainer>
           <div className="w-full h-full flex overflow-hidden rounded-2xl">
-
-            {/* SIDEBAR — hidden on mobile when a chat is open */}
+            {/* SIDEBAR */}
             <div
               className={`
                 ${selectedUser ? "hidden md:flex" : "flex"}
@@ -35,13 +42,25 @@ function ChatPage() {
               <div className="shrink-0">
                 <ProfileHeader />
                 <ActiveTabSwitch />
+
+                <SearchBar
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                  onClear={() => setSearchQuery("")}
+                  placeholder={
+                    activeTab === "chats"
+                      ? "Search chats..."
+                      : "Search contacts..."
+                  }
+                />
               </div>
+
               <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-2">
                 {activeTab === "chats" ? <ChatsList /> : <ContactList />}
               </div>
             </div>
 
-            {/* CHAT AREA — full screen on mobile when a chat is open */}
+            {/* CHAT AREA */}
             <div
               className={`
                 ${selectedUser ? "flex" : "hidden md:flex"}
@@ -51,7 +70,6 @@ function ChatPage() {
             >
               {selectedUser ? <ChatContainer /> : <NoConversationPlaceholder />}
             </div>
-
           </div>
         </BorderAnimatedContainer>
       </div>
